@@ -12,17 +12,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # --- CONFIGURATION & SETUP ---
 DB_FILE = "permits.db"
-# IMPORTANT: In a real application, use environment variables for secrets.
-SECRET_KEY = "a-very-secret-key-for-sessions" 
+SECRET_KEY = "a-very-secret-key-for-sessions"  # Use env var in production
 USERNAME = "admin"
-# For simplicity, password is hardcoded. In production, hash it securely.
-PASSWORD_HASH = generate_password_hash("Admin@2030$")
+PASSWORD = "Admin@2030$"
+PASSWORD_HASH = generate_password_hash(PASSWORD)
 
 def init_db():
-    """Initializes the SQLite database and creates the permits table if it doesn't exist."""
+    """Initializes the SQLite database and creates the permits table."""
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
-    # Updated table to include all fields from the image
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS permits (
         id TEXT PRIMARY KEY,
@@ -48,7 +46,6 @@ def init_db():
 # --- HTML TEMPLATES ---
 
 def get_login_page_template():
-    """Returns the HTML for the login page, styled to match the user's image."""
     return """
     <!DOCTYPE html>
     <html lang="en">
@@ -115,14 +112,13 @@ def get_login_page_template():
     """
 
 def get_main_page_template(permits_html):
-    """Returns the HTML for the main generator and list page."""
     return f"""
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Permit Generator</title>
+        <title>Permit Dashboard</title>
         <script src="https://cdn.tailwindcss.com"></script>
     </head>
     <body class="bg-gray-100 p-4 md:p-8">
@@ -131,6 +127,7 @@ def get_main_page_template(permits_html):
                 <h1 class="text-3xl font-bold">Permit Dashboard</h1>
                 <a href="/logout" class="text-blue-500 hover:underline">Logout</a>
             </div>
+
             <!-- Form Section -->
             <div class="bg-white p-6 rounded-lg shadow-md mb-8">
                 <div class="mb-6">
@@ -138,20 +135,62 @@ def get_main_page_template(permits_html):
                     <h3 class="text-2xl font-semibold text-gray-700 mt-2">Liquor Permit Verification</h3>
                 </div>
                 <form action="/" method="POST" class="space-y-3 text-gray-700">
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Business Name/ Owner:</span><input type="text" name="businessName" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Business ID No:</span><input type="text" name="businessId" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Address P.O. Box:</span><input type="text" name="addressPoBox" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Phone No.:</span><input type="text" name="phone" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Subcounty:</span><input type="text" name="subcounty" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Ward:</span><input type="text" name="ward" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Market:</span><input type="text" name="market" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Plot No:</span><input type="text" name="plotNo" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Activity/Business/Profession or Occupation of:</span><input type="text" name="activity" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Permit Amount Paid:</span><input type="text" name="amount" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Kshs in words:</span><input type="text" name="amountInWords" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Date of issue:</span><input type="text" name="issueDate" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Expiry Date:</span><input type="text" name="expiryDate" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
-                    <p class="flex flex-col md:flex-row justify-between md:items-center"><span class="font-semibold md:w-1/3 mb-1 md:mb-0">Status:</span><input type="text" name="status" value="" class="w-full md:w-2/3 p-2 border rounded"></p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Business Name/ Owner:</span>
+                        <input type="text" name="businessName" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Business ID No:</span>
+                        <input type="text" name="businessId" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Address P.O. Box:</span>
+                        <input type="text" name="addressPoBox" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Phone No.:</span>
+                        <input type="text" name="phone" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Subcounty:</span>
+                        <input type="text" name="subcounty" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Ward:</span>
+                        <input type="text" name="ward" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Market:</span>
+                        <input type="text" name="market" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Plot No:</span>
+                        <input type="text" name="plotNo" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Activity/Business/Profession or Occupation of:</span>
+                        <input type="text" name="activity" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Permit Amount Paid:</span>
+                        <input type="text" name="amount" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Kshs in words:</span>
+                        <input type="text" name="amountInWords" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Date of issue:</span>
+                        <input type="text" name="issueDate" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Expiry Date:</span>
+                        <input type="text" name="expiryDate" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
+                    <p class="flex flex-col md:flex-row justify-between md:items-center">
+                        <span class="font-semibold md:w-1/3 mb-1 md:mb-0">Status:</span>
+                        <input type="text" name="status" value="" class="w-full md:w-2/3 p-2 border rounded">
+                    </p>
                     
                     <button type="submit" class="w-full mt-6 bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700">
                         Create New Permit
@@ -211,14 +250,11 @@ def get_main_page_template(permits_html):
     </body>
     </html>
     """
- 
 
 def get_permit_view_template(permit):
-    """Returns the HTML for the public permit view page."""
-    # Create a dictionary from the tuple for easier access
     fields = [
-        'id', 'businessName', 'businessId', 'addressPoBox', 'phone', 'subcounty', 
-        'ward', 'market', 'plotNo', 'activity', 'amount', 'amountInWords', 
+        'id', 'businessName', 'businessId', 'addressPoBox', 'phone', 'subcounty',
+        'ward', 'market', 'plotNo', 'activity', 'amount', 'amountInWords',
         'issueDate', 'expiryDate', 'status'
     ]
     permit_dict = dict(zip(fields, permit))
@@ -260,7 +296,6 @@ def get_permit_view_template(permit):
     """
 
 # --- HTTP REQUEST HANDLER ---
-
 class PermitServer(http.server.BaseHTTPRequestHandler):
     def _send_response(self, content, content_type="text/html", status=200, headers=None):
         self.send_response(status)
@@ -281,23 +316,11 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
 
     def is_authenticated(self):
         cookie_header = self.headers.get('Cookie')
-        if not cookie_header: return False
+        if not cookie_header:
+            return False
         cookie = SimpleCookie()
         cookie.load(cookie_header)
         return cookie.get("session") and cookie["session"].value == SECRET_KEY
-     def do_GET(self):
-        parsed_path = urlparse(self.path)
-        path = parsed_path.path
-        query_params = parse_qs(parsed_path.query)
-
-        # --- Healthcheck endpoint ---
-        if path == '/health' or path == '/healthz':
-            health = {
-                "status": "ok",
-                "db": "connected" if self._check_db() else "error"
-            }
-            self._send_response(json.dumps(health), content_type="application/json")
-            return
 
     def _check_db(self):
         try:
@@ -307,11 +330,22 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
             return True
         except Exception:
             return False
+
     def do_GET(self):
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         query_params = parse_qs(parsed_path.query)
-        
+
+        # Health check
+        if path == '/health' or path == '/healthz':
+            health = {
+                "status": "ok",
+                "db": "connected" if self._check_db() else "error"
+            }
+            self._send_response(json.dumps(health), content_type="application/json")
+            return
+
+        # Public permit view
         if path.startswith('/permit/'):
             permit_id = path.split('/')[-1]
             conn = sqlite3.connect(DB_FILE)
@@ -319,10 +353,13 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
             cursor.execute("SELECT * FROM permits WHERE id=?", (permit_id,))
             permit = cursor.fetchone()
             conn.close()
-            if permit: self._send_response(get_permit_view_template(permit))
-            else: self._send_response("Permit not found", status=404)
+            if permit:
+                self._send_response(get_permit_view_template(permit))
+            else:
+                self._send_response("Permit not found", status=404)
             return
 
+        # Generate QR code (as base64 image)
         if path == '/api/qrcode':
             url_to_encode = query_params.get('url', [''])[0]
             if url_to_encode:
@@ -335,19 +372,14 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
                 self._send_response(json.dumps({'error': 'URL parameter is missing'}), content_type="application/json", status=400)
             return
 
+        # Download QR code as PNG
         if path.startswith('/api/download-qrcode/'):
             permit_id = path.split('/')[-1]
             proto = self.headers.get('X-Forwarded-Proto', 'http')
             host = self.headers.get('Host', f"{self.server.server_address[0]}:{self.server.server_address[1]}")
             url_to_encode = f"{proto}://{host}/permit/{permit_id}"
-            
-            # Use QRCode class to add a border (padding)
-            qr = qrcode.QRCode(
-                version=1,
-                error_correction=qrcode.constants.ERROR_CORRECT_L,
-                box_size=10,
-                border=1, # Setting border to 1 for a thin padding
-            )
+
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
             qr.add_data(url_to_encode)
             qr.make(fit=True)
             img = qr.make_image(fill_color="black", back_color="white")
@@ -358,11 +390,14 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
             self._send_response(buf.getvalue(), content_type="image/png", headers=headers)
             return
 
+        # Auth required for dashboard
         if not self.is_authenticated():
-            if path == '/login': self._send_response(get_login_page_template())
-            else: self._redirect('/login')
+            if path == '/login':
+                self._send_response(get_login_page_template())
+            else:
+                self._redirect('/login')
             return
-        
+
         if path == '/logout':
             self.send_response(303)
             self.send_header('Location', '/login')
@@ -376,12 +411,12 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
             cursor.execute("SELECT * FROM permits ORDER BY rowid DESC")
             permits = cursor.fetchall()
             conn.close()
-            permits_html = ""
-            
+
             proto = self.headers.get('X-Forwarded-Proto', 'http')
             host = self.headers.get('Host', f"{self.server.server_address[0]}:{self.server.server_address[1]}")
             base_url = f"{proto}://{host}"
 
+            permits_html = ""
             if not permits:
                 permits_html = "<p>No permits created yet.</p>"
             else:
@@ -403,6 +438,7 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
                         </div>
                     </div>
                     """
+
             self._send_response(get_main_page_template(permits_html))
         else:
             self._send_response("Not Found", status=404)
@@ -410,7 +446,7 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers.get('Content-Length', 0))
         post_data = self.rfile.read(content_length).decode('utf-8')
-        
+
         if self.path == '/login':
             params = parse_qs(post_data)
             username = params.get('username', [''])[0]
@@ -421,7 +457,6 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
                 self.send_header('Set-Cookie', f'session={SECRET_KEY}; Path=/; HttpOnly')
                 self.end_headers()
             else:
-                # Redirect to the external site on failure
                 self._redirect('https://eservices.muranga.go.ke')
             return
 
@@ -432,7 +467,6 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
         if self.path == '/':
             params = parse_qs(post_data)
             new_id = uuid.uuid4().hex[:12]
-            # Updated to include all new form fields in correct order
             permit_data = (
                 new_id,
                 params.get('businessName', [''])[0],
@@ -450,40 +484,63 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
                 params.get('expiryDate', [''])[0],
                 params.get('status', [''])[0]
             )
-            
             conn = sqlite3.connect(DB_FILE)
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO permits VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", permit_data)
+            cursor.execute("""
+                INSERT INTO permits VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, permit_data)
             conn.commit()
             conn.close()
             self._redirect('/')
-        
+
         elif self.path == '/api/delete-permit':
-            data = json.loads(post_data)
-            permit_id = data.get('id')
-            if permit_id:
-                conn = sqlite3.connect(DB_FILE)
-                cursor = conn.cursor()
-                cursor.execute("DELETE FROM permits WHERE id=?", (permit_id,))
-                conn.commit()
-                conn.close()
-                self._send_response(json.dumps({'success': True}), content_type="application/json")
-            else:
-                self._send_response(json.dumps({'success': False, 'error': 'ID is missing'}), content_type="application/json", status=400)
+            try:
+                data = json.loads(post_data)
+                permit_id = data.get('id')
+                if permit_id:
+                    conn = sqlite3.connect(DB_FILE)
+                    cursor = conn.cursor()
+                    cursor.execute("DELETE FROM permits WHERE id=?", (permit_id,))
+                    conn.commit()
+                    conn.close()
+                    self._send_response(json.dumps({'success': True}), content_type="application/json")
+                else:
+                    self._send_response(
+                        json.dumps({'success': False, 'error': 'ID is missing'}),
+                        content_type="application/json",
+                        status=400
+                    )
+            except Exception as e:
+                self._send_response(
+                    json.dumps({'success': False, 'error': str(e)}),
+                    content_type="application/json",
+                    status=500
+                )
         else:
             self._send_response("Not Found", status=404)
 
-
 # --- MAIN EXECUTION ---
-
 if __name__ == "__main__":
     PORT = 7000
-    # Before running, make sure to install the required packages:
-    # pip install qrcode[pil] werkzeug
+    print(f"Starting server on port {PORT}...")
+    print("Login: username='admin', password='Admin@2030$'")
+    print("Visit: http://localhost:7000")
+
+    # Install required packages if not installed
+    try:
+        import qrcode
+        from PIL import Image
+    except ImportError:
+        print("Error: Install dependencies with:")
+        print("pip install qrcode[pil] werkzeug")
+        exit(1)
+
     init_db()
-    
+
     Handler = PermitServer
     with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print(f"Serving at http://localhost:{PORT}")
-        print("Login with username 'admin' and password 'Admin@2030$'")
-        httpd.serve_forever()
+        try:
+            httpd.serve_forever()
+        except KeyboardInterrupt:
+            print("\nShutting down server...")
+            httpd.shutdown()
