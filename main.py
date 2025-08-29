@@ -211,6 +211,7 @@ def get_main_page_template(permits_html):
     </body>
     </html>
     """
+ 
 
 def get_permit_view_template(permit):
     """Returns the HTML for the public permit view page."""
@@ -284,7 +285,28 @@ class PermitServer(http.server.BaseHTTPRequestHandler):
         cookie = SimpleCookie()
         cookie.load(cookie_header)
         return cookie.get("session") and cookie["session"].value == SECRET_KEY
+     def do_GET(self):
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
+        query_params = parse_qs(parsed_path.query)
 
+        # --- Healthcheck endpoint ---
+        if path == '/health' or path == '/healthz':
+            health = {
+                "status": "ok",
+                "db": "connected" if self._check_db() else "error"
+            }
+            self._send_response(json.dumps(health), content_type="application/json")
+            return
+
+    def _check_db(self):
+        try:
+            conn = sqlite3.connect(DB_FILE)
+            conn.execute("SELECT 1")
+            conn.close()
+            return True
+        except Exception:
+            return False
     def do_GET(self):
         parsed_path = urlparse(self.path)
         path = parsed_path.path
